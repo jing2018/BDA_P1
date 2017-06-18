@@ -58,4 +58,4 @@ gorder(simpleGraph) # 1644
 gsize(simpleGraph) # 3746
 simpleGraphwithout1213 <- delete_vertices(simpleGraph, "1213")
 gorder(simpleGraphwithout1213) # 1643
-gsize(sipmleGraphwithout1213) # 3742
+gsize(simpleGraphwithout1213) # 3742
