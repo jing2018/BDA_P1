@@ -1,16 +1,32 @@
 #Run if you haven't installed igraph
 #install.packages("igraph")
+#install.packages("sna")
+#install.packages("stringr")
 
-library(igraph)
+library("igraph")
+library("sna")
+library("stringr")
 
+#==========================
+#read data from file & preprocessing
+#==========================
 inp = read.csv(file = "../edgeList.csv")
 #a few possible simplifications: removing edges with fewer than 50 emails (that's most edges) and removing 1-cycles (emails to self)
-simpler <- subset(inp, Weight > 10)
-simpler <- subset(inp, To != From)
+simpler <- subset(inp, Weight > 50)
+simpler <- subset(simpler, To != From)
+
+#simplify--turn a graph into a simple graph by using the simplify function
+is.simple(simpleGraph)
+##[1] FALSE
+simpleGraph=simplify(simpleGraph)
+is.simple(simpleGraph)
+##[1] TRUE
+
 emailNames = read.csv(file = "../NamesToIndices.csv")
 
-myGraph = graph_from_data_frame(inp,directed=TRUE)
-simpleGraph = graph_from_data_frame(simpler,directed=FALSE)
+myGraph = graph_from_data_frame(inp,directed=TRUE) 
+simpleGraph = graph_from_data_frame(simpler,directed=FALSE) #undirected graph
+DirectedGraph = graph_from_data_frame(simpler,directed=TRUE) #directed graph
 
 #function 1: igraph.plot implements the generic plot function, so we can just call plot()
 #even when we only keep edges with > 20 emails, we still see a very dense graph.
@@ -31,8 +47,20 @@ for (i in c(1,2,3,4,5)){
 }
 
 #Function 4: Degree
+#undirected degree
 deg = degree(graph = simpleGraph)
+hist(deg,main = "Histogram of node degree")
 print(max(deg))
+
+#directed degree-only count the "in" mail 
+inDeg=degree(DirectedGraph, mode="in")
+hist(inDeg,main="Histogram of in-node degree")
+#Frequency of degree distribution
+inDegDist=degree_distribution(DirectedGraph, cumulative = FALSE,mode = "in")
+
+inDegDist=inDegDist*100
+plot(x=0:max(inDeg), y=inDegDist, col="orange",
+     xlab = "Degree", ylab = "Frequency*100")
 
 #Functions 5-7: Basic descriptive analytics
 
@@ -59,3 +87,37 @@ gsize(simpleGraph) # 3746
 simpleGraphwithout1213 <- delete_vertices(simpleGraph, "1213")
 gorder(simpleGraphwithout1213) # 1643
 gsize(simpleGraphwithout1213) # 3742
+
+#Function 10:diameter
+#A network diameter is the longest geodesic distance (length of the shortest path between two nodes) in the network. 
+#In igraph, diameter() returns the distance, while get_diameter() returns the nodes along the first found path of that distance.
+diameter(myGraph,directed=FALSE,weights = NA)
+##[1] 13
+diameter(simpleGraph,directed=FALSE,weights = NA)
+##[1] 15
+diam=get_diameter(simpleGraph,directed=FALSE,weights = NA)
+##+ 16/362 vertices, named:
+## [1] 9703  1639  8114  4150  5969  1750  6887  3609  3573  10266
+##[11] 10688 2792  10475 7680  5033  7044 
+
+#Function 11: Centrality & centralization
+#(e)power centrality?
+centr_degree(DirectedGraph, mode="in", normalized=TRUE)
+#Closeness
+closeness(DirectedGraph, mode="in", weights=NA) 
+centr_clo(DirectedGraph, mode="in", normalized=T)
+#Eigenvector(centrality based on distance to others in the graph)
+eigen_centrality(DirectedGraph, directed=T, weights=NA)
+centr_eigen(DirectedGraph, directed=T, normalized=T) 
+
+#Function 12: Hubs and authorities
+# Hubs were expected to contain catalogs with a large number of outgoing links;
+# while authorities would get many incoming links from hubs
+hs <- hub_score(DirectedGraph )$vector
+as <- authority_score(DirectedGraph)$vector
+
+par(mfrow=c(1,2))
+plot(DirectedGraph,vertex.label=NA, vertex.size=hs*50, main="Hubs")
+plot(DirectedGraph,vertex.label=NA,  vertex.size=as*30, main="Authorities")
+
+
