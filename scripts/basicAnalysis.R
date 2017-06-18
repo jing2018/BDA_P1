@@ -5,8 +5,8 @@ library(igraph)
 
 inp = read.csv(file = "../edgeList.csv")
 #a few possible simplifications: removing edges with fewer than 50 emails (that's most edges) and removing 1-cycles (emails to self)
-simpler <- subset(inp, Weight > 10)
-simpler <- subset(inp, To != From)
+simpler <- subset(inp, Weight > 50)
+simpler <- subset(simpler, To != From)
 emailNames = read.csv(file = "../NamesToIndices.csv")
 
 myGraph = graph_from_data_frame(inp,directed=TRUE)
